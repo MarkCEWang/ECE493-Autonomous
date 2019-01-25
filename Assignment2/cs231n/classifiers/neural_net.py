@@ -75,7 +75,15 @@ class TwoLayerNet(object):
     # Store the result in the scores variable, which should be an array of      #
     # shape (N, C).                                                             #
     #############################################################################
-    pass
+    
+    # Use the ReLU activation function per layer. Output of 1 --> input of 2:
+    # First output is the dot product of the input, X, and the weights
+    h1 = np.maximum(0, np.dot(X, W1) + b1)
+    h2 = np.maximum(0, np.dot(h1, W2) + b2)
+    
+    scores = h2
+    
+    
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -92,7 +100,24 @@ class TwoLayerNet(object):
     # in the variable loss, which should be a scalar. Use the Softmax           #
     # classifier loss.                                                          #
     #############################################################################
-    pass
+    
+    n = X.shape[0]
+    # Calculate the unnormalized probs from the scores:
+    exp_scores = np.exp(scores)
+    
+    # Calculate the normalized probabilities
+    probs = exp_scores/np.sum(exp_scores)
+    
+    # Calc the softmax loss 
+    softmax_losses = -np.log(probs)
+    
+    # Compute the L2 norm reguarlization :lambda*R(W), where R(W) = sum of squared weights
+    R_W = reg*(np.sum(W1*W1) + np.sum(W2*W2))
+    
+    # Full loss is the sum of softmax losses/n_losses + L2 norm regularization
+    loss = np.sum(softmax_losses)/n + R_W
+    
+    
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
