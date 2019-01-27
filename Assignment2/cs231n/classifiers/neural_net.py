@@ -101,21 +101,20 @@ class TwoLayerNet(object):
     # classifier loss.                                                          #
     #############################################################################
     
-    n = X.shape[0]
     # Calculate the unnormalized probs from the scores:
     exp_scores = np.exp(scores)
     
     # Calculate the normalized probabilities
-    probs = exp_scores/np.sum(exp_scores)
+    probs = exp_scores[range(N), y]/np.sum(exp_scores)
     
     # Calc the softmax loss 
-    softmax_losses = -np.log(probs)
+    L_theta = -probs + np.log(np.sum(probs))
     
     # Compute the L2 norm reguarlization :lambda*R(W), where R(W) = sum of squared weights
     R_W = reg*(np.sum(W1*W1) + np.sum(W2*W2))
     
     # Full loss is the sum of softmax losses/n_losses + L2 norm regularization
-    loss = np.sum(softmax_losses)/n + R_W
+    loss = np.sum(L_theta)/N + R_W
     
     
     #############################################################################
@@ -129,7 +128,27 @@ class TwoLayerNet(object):
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
-    pass
+    
+    # Compute the gradient of the scores
+    dScores = 
+    
+    dW2 = np.dot(dScores, h1)
+    
+    dHidden = np.dot(dScores, W2.T)
+    
+    # 
+    
+    dW1 = np.dot()
+    
+    db2 = np.sum(dScores)
+    db1 = np.sum(dHidden)
+    
+    # Store vals in dict
+    grads['W1'] = dW1 + 2*reg*W1
+    grads['W2'] = dW2 + 2*reg*W2
+    grads['b1'] = db1
+    grads['b2'] = db2
+    
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
