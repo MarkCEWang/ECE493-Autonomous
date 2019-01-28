@@ -100,23 +100,21 @@ class TwoLayerNet(object):
     # classifier loss.                                                          #
     #############################################################################
     
-    # Stable softmax
-    scores -= np.max(scores)
-    
+
     # Calculate the unnormalized probs from the scores:
     exp_scores = np.exp(scores)
     
-    # Calculate the normalized probabilities
-    probs = exp_scores[range(N), y]/np.sum(exp_scores, axis = 1)
+    # Calculate the softmax. Formula given in notes
+    softmax = exp_scores/np.sum(exp_scores , axis = 1, keepdims=True)
     
-    # Calc the softmax loss 
-    L_theta = -probs + np.log(np.sum(probs))
+    # Calc the softmax loss, L(theta)
+    L_theta = np.average(-np.log(softmax[range(N),y]))
     
     # Compute the L2 norm reguarlization :lambda*R(W), where R(W) = sum of squared weights
     R_W = reg*(np.sum(W1*W1) + np.sum(W2*W2))
     
     # Full loss is the sum of softmax losses/n_losses + L2 norm regularization
-    loss = np.sum(L_theta)/N + R_W
+    loss = L_theta + R_W
         
     #############################################################################
     #                              END OF YOUR CODE                             #
@@ -130,32 +128,53 @@ class TwoLayerNet(object):
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
     
-    # Compute the gradient of the scores - averaged
-    dScores = scores/np.sum(scores)
-    dScores[range(N), y] = (dScores[range(N), y] -1)/N
+    """
+    Calculating gradients using some of the partial derivatives:
+        
+        From tutorial notes:
+            
+        CM = loss func
+        SM = softmax
+        f_yi: ith score
+        
+        dCE/dW2 = -(1/SM)/N * (SM - SM^2) * Relu(X.W1 + b1)
+                = (SM - 1)/N * Relu(X.W1 + b1)
+        
+        d(reg(W1))/dW1 = 2*reg*W1
+        d(reg(W2))/dW2 = 2*reg*W2
     
-    # Backpropagation - learned from the Stanford lectures
-    # Get derivative of the weights
-    dW2 = np.dot(h1.T, dScores)
+        dCE/db2 = (SM - 1)/N
+        
+        dCE/dW1 = (SM-1)/N * W2.T * binarymask * X
     
-    # Backprop dW2 to get db2
-    db2 = np.sum(dScores, axis=0)
+        dCE/db1 = (SM-1)/N * W2.T * binary mask
+    """
     
+    # Calculate W2 through chain rule
+    softmax_1 = softmax
+    softmax_1[range(N), y] -= 1
     
-    # Backprop W2 to get hidden layer
-    dhidden = np.dot(W2, dScores.T)
-    #dhidden[h1 == 0] = 0
+    dReg1 = 2*reg*W1
+    dReg2 = 2*reg*W2
     
-    #Backprop dhidden to get dW1
-    dW1 = np.dot(X.T, dhidden.T)
+    dW2 = (np.maximum(0, np.dot(X, W1) + b1).T).dot(softmax_1/N) + dReg2
     
-    # Get db1
-    db1 = np.sum(dhidden, axis=0)
+    # Calculate the gradient of the b2 
+    db2 = np.sum(softmax_1/N, axis=0)
     
-    # Add the regularisation terms and store in dict
-    grads['W2'] = dW2 + 2*reg*W2
+    # Get the binary mask dRelu/dh1 = 1, if h1 >= 0 , 0, else
+    bin_mask = np.maximum(0, X.dot(W1) + b1) > 0
+    
+    # Calculate dW1 by chain rule
+    dW1 = X.T.dot(bin_mask * (softmax_1/N).dot(W2.T)) + dReg1
+    
+    # Calculate db1 by chain rule
+    db1 = np.sum(bin_mask*((softmax_1/N).dot(W2.T)), axis=0)
+    
+    #  store in dict
+    grads['W2'] = dW2
     grads['b2'] = db2
-    grads['W1'] = dW1 + 2*reg*W1
+    grads['W1'] = dW1 
     grads['b1'] = db1    
     
     #############################################################################
