@@ -77,7 +77,7 @@ class TwoLayerNet(object):
     #############################################################################
     
     # Use the ReLU activation function per layer. Output of 1 --> input of 2:
-    # First output is the dot product of the input, X, and the weights
+    # First output is the dot product of the input, X, and the weights plus bias term
     h1 = np.maximum(0, np.dot(X, W1) + b1)
     h2 = np.dot(h1, W2) + b2
     
@@ -100,7 +100,6 @@ class TwoLayerNet(object):
     # classifier loss.                                                          #
     #############################################################################
     
-
     # Calculate the unnormalized probs from the scores:
     exp_scores = np.exp(scores)
     
@@ -135,7 +134,6 @@ class TwoLayerNet(object):
             
         CM = loss func
         SM = softmax
-        f_yi: ith score
         
         dCE/dW2 = -(1/SM)/N * (SM - SM^2) * Relu(X.W1 + b1)
                 = (SM - 1)/N * Relu(X.W1 + b1)
@@ -163,7 +161,7 @@ class TwoLayerNet(object):
     db2 = np.sum(softmax_1/N, axis=0)
     
     # Get the binary mask dRelu/dh1 = 1, if h1 >= 0 , 0, else
-    bin_mask = np.maximum(0, X.dot(W1) + b1) > 0
+    bin_mask = h1 > 0
     
     # Calculate dW1 by chain rule
     dW1 = X.T.dot(bin_mask * (softmax_1/N).dot(W2.T)) + dReg1
